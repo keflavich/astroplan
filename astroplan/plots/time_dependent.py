@@ -15,6 +15,20 @@ __all__ = ['plot_airmass', 'plot_schedule_airmass', 'plot_parallactic',
            'plot_altitude']
 
 
+def _plot(ax, x, y, **style_kwargs):
+    """``Axes.plot``, still accepting a format string the way plot_date did.
+
+    These functions document ``style_kwargs`` as being handed to
+    ``plot_date``, which took the format string as a ``fmt`` keyword, so
+    calling code passes ``style_kwargs={'fmt': '--'}``. ``Axes.plot`` accepts
+    it positionally only, and raises "Line2D.set() got an unexpected keyword
+    argument 'fmt'" otherwise.
+    """
+    fmt = style_kwargs.pop('fmt', None)
+    args = (x, y) if fmt is None else (x, y, fmt)
+    return ax.plot(*args, **style_kwargs)
+
+
 def _secz_to_altitude(secant_z):
     """
     Convert airmass (approximated as the secant of the zenith angle) to
@@ -153,7 +167,8 @@ def plot_airmass(targets, observer, time, ax=None, style_kwargs=None,
 
     if 'lw' not in style_kwargs:
         style_kwargs.setdefault('linewidth', 1.5)
-    if 'ls' not in style_kwargs and 'linestyle' not in style_kwargs:
+    if ('ls' not in style_kwargs and 'linestyle' not in style_kwargs
+            and 'fmt' not in style_kwargs):
         style_kwargs.setdefault('linestyle', '-')
 
     if hasattr(time, 'utcoffset') and use_local_tz:
@@ -191,7 +206,8 @@ def plot_airmass(targets, observer, time, ax=None, style_kwargs=None,
             target_name = ''
 
         # Plot data (against timezone-offset time)
-        ax.plot(timetoplot.plot_date, masked_airmass, label=target_name, **style_kwargs)
+        _plot(ax, timetoplot.plot_date, masked_airmass, label=target_name,
+              **style_kwargs)
 
     # Format the time axis
     xlo, xhi = (timetoplot[0]), (timetoplot[-1])
@@ -368,7 +384,8 @@ def plot_altitude(targets, observer, time, ax=None, style_kwargs=None,
     if style_kwargs is None:
         style_kwargs = {}
     style_kwargs = dict(style_kwargs)
-    if 'ls' not in style_kwargs and 'linestyle' not in style_kwargs:
+    if ('ls' not in style_kwargs and 'linestyle' not in style_kwargs
+            and 'fmt' not in style_kwargs):
         style_kwargs.setdefault('linestyle', '-')
     if 'lw' not in style_kwargs:
         style_kwargs.setdefault('linewidth', 1.5)
@@ -398,7 +415,8 @@ def plot_altitude(targets, observer, time, ax=None, style_kwargs=None,
             target_name = ''
 
         # Plot data
-        ax.plot(time.plot_date, masked_altitude, label=target_name, **style_kwargs)
+        _plot(ax, time.plot_date, masked_altitude, label=target_name,
+              **style_kwargs)
 
     # Format the time axis
     ax.xaxis_date()
@@ -595,7 +613,8 @@ def plot_parallactic(target, observer, time, ax=None, style_kwargs=None,
     if style_kwargs is None:
         style_kwargs = {}
     style_kwargs = dict(style_kwargs)
-    if 'ls' not in style_kwargs and 'linestyle' not in style_kwargs:
+    if ('ls' not in style_kwargs and 'linestyle' not in style_kwargs
+            and 'fmt' not in style_kwargs):
         style_kwargs.setdefault('linestyle', '-')
 
     # Populate time window if needed.
@@ -620,7 +639,7 @@ def plot_parallactic(target, observer, time, ax=None, style_kwargs=None,
     style_kwargs.setdefault('label', target_name)
 
     # Plot data.
-    ax.plot(time.plot_date, p_angle, **style_kwargs)
+    _plot(ax, time.plot_date, p_angle, **style_kwargs)
 
     # Format the time axis
     ax.xaxis_date()
